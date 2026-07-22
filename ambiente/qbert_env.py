@@ -1,3 +1,6 @@
+import random
+from inimigos.bola_verde import BolaVerde
+
 class QbertEnv:
     def __init__(self, niveis=6):
         self.niveis = niveis
@@ -33,6 +36,10 @@ class QbertEnv:
             
         self.posicao_agente = (0, 0)
         self.estado_blocos[self.posicao_agente] = 1
+
+        self.bola_verde = BolaVerde()
+        self.bola_verde.ativa = False
+        self.bola_verde.posicao = None
         
         return self.posicao_agente
 
@@ -41,6 +48,16 @@ class QbertEnv:
         
         if acao in vizinhos:
             self.posicao_agente = vizinhos[acao]
+
+            if not self.bola_verde.ativa:
+                if random.random() < 0.15:
+                    self.bola_verde.ativa = True
+                    self.bola_verde.posicao = (1, random.choice([0, 1]))
+            else:
+                self.bola_verde.mover(self.niveis)
+
+            if self.bola_verde.ativa and self.posicao_agente == self.bola_verde.posicao:
+                return self.posicao_agente, -10, False
             
             recompensa = 0
             if self.estado_blocos[self.posicao_agente] == 0:
@@ -54,4 +71,4 @@ class QbertEnv:
             return self.posicao_agente, recompensa, vitoria
             
         else:
-            return self.posicao_agente, -10, True
+            return self.posicao_agente, -10, False

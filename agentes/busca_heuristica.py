@@ -34,7 +34,7 @@ class AgenteBuscaHeuristica:
 
         return min(distancias)
     
-    def obter_acao(self, estado_atual, posicao_agente, grafo):
+    def obter_acao(self, estado_atual, posicao_agente, grafo, posicao_inimigo=None):
         fila = []
         contador = 0
 
@@ -65,6 +65,9 @@ class AgenteBuscaHeuristica:
             vizinhos = grafo[pos_atual]
 
             for acao, proxima_pos in vizinhos.items():
+                if posicao_inimigo is not None and proxima_pos == posicao_inimigo:
+                    continue
+
                 novo_estado= estado_atual.copy()
                 novo_estado[proxima_pos] = 1
 
