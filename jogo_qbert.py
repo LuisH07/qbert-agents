@@ -104,16 +104,29 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
     Controla o loop gráfico do Pygame, animando o agente escolhido na pirâmide.
     """
     try:
-        img_bloco_dir = pygame.image.load("sprites/cenario/plataforma-direita.png").convert_alpha()
-        img_bloco_esq = pygame.image.load("sprites/cenario/plataforma-esquerda.png").convert_alpha()
+        img_bloco_dir_fase1 = pygame.image.load("sprites/cenario/plataforma-direita-fase1.png").convert_alpha()
+        img_bloco_esq_fase1 = pygame.image.load("sprites/cenario/plataforma-esquerda-fase1.png").convert_alpha()
+        img_bloco_esq_comp = pygame.image.load("sprites/cenario/plataforma-esquerda-fase1-completa.png").convert_alpha()
+        img_bloco_dir_comp = pygame.image.load("sprites/cenario/plataforma-direita-fase1-completa.png").convert_alpha()
         img_agente = pygame.image.load("sprites/qbert/qbert-frente-esquerda.png").convert_alpha()
+        
+
+        # Carrega os sprites do Q*bert para diferentes direções
+        sprites_qbert = {
+            'baixo_esq': pygame.image.load("sprites/qbert/qbert-frente-esquerda.png").convert_alpha(),
+            'baixo_dir': pygame.image.load("sprites/qbert/qbert-frente-direita.png").convert_alpha(),
+            'cima_esq':  pygame.image.load("sprites/qbert/qbert-costas-esquerda.png").convert_alpha(),
+            'cima_dir':  pygame.image.load("sprites/qbert/qbert-costas-direita.png").convert_alpha()
+        }
 
         mult_x, mult_y = 1.4, 1
-        nova_largura = int(img_bloco_dir.get_width() * mult_x)
-        nova_altura = int(img_bloco_dir.get_height() * mult_y)
+        nova_largura = int(img_bloco_dir_fase1.get_width() * mult_x)
+        nova_altura = int(img_bloco_dir_fase1.get_height() * mult_y)
 
-        img_bloco_dir = pygame.transform.scale(img_bloco_dir, (nova_largura, nova_altura))
-        img_bloco_esq = pygame.transform.scale(img_bloco_esq, (nova_largura, nova_altura))
+        img_bloco_dir_fase1 = pygame.transform.scale(img_bloco_dir_fase1, (nova_largura, nova_altura))
+        img_bloco_esq_fase1 = pygame.transform.scale(img_bloco_esq_fase1, (nova_largura, nova_altura))
+        img_bloco_dir_comp = pygame.transform.scale(img_bloco_dir_comp, (nova_largura, nova_altura))
+        img_bloco_esq_comp = pygame.transform.scale(img_bloco_esq_comp, (nova_largura, nova_altura))
     except FileNotFoundError:
         print("Erro: Imagens não encontradas na pasta 'sprites/'. Verifique os caminhos.")
         return
@@ -129,6 +142,8 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
     
     # Índice para ler a lista de comandos caso o agente seja o Genético
     passo_genetico = 0
+    passos_totais = 0
+    ultima_acao = 'baixo_esq'
     rodando = True
 
     while rodando:
@@ -155,17 +170,23 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
                 # Se desativamos os inimigos no menu, garantimos que a bola verde/coily não surjam
                 if not com_inimigos and hasattr(env, 'bola_verde'):
                     env.bola_verde.ativa = False
-                
+
+                passos_totais += 1
                 nova_posicao, recompensa, vitoria = env.step(acao)
                 linha_agente, coluna_agente = nova_posicao
+
+                if acao in sprites_qbert:
+                    ultima_acao = acao
 
                 print(f"Passo: {passo_genetico if escolha_agente == '2' else ''} | Ação: {acao.upper():10} | Posição: {nova_posicao} | Recompensa: {recompensa}")
 
                 if vitoria:
                     print("\nVITÓRIA! O agente zerou a pirâmide!")
+                    mostrar_tela_fim(True, passos_totais)
                     rodando = False
                 elif recompensa in (-10, -100):
                     print("\nGAME OVER! O Q*bert caiu no abismo ou foi pego!")
+                    mostrar_tela_fim(False, passos_totais)
                     rodando = False
             else:
                 print("\nO agente finalizou sua sequência de ações.")
@@ -181,40 +202,89 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
             for coluna in range(linha + 1):
                 x_pixel = x_topo + (coluna * ESPACAMENTO_X) - (linha * (ESPACAMENTO_X // 2))
                 y_pixel = y_topo + (linha * ESPACAMENTO_Y)
+
+                ja_pintado = env.estado_blocos.get((linha, coluna), 0) == 1
                 
-                if coluna % 2 == 0:
-                    tela.blit(img_bloco_dir, (x_pixel, y_pixel))
+                if coluna <= linha // 2:
+                    img_atual = img_bloco_esq_comp if ja_pintado else img_bloco_esq_fase1
                 else:
-                    tela.blit(img_bloco_esq, (x_pixel, y_pixel))
+                    img_atual = img_bloco_dir_comp if ja_pintado else img_bloco_dir_fase1
+                
+                tela.blit(img_atual, (x_pixel, y_pixel))
+
+        # Seleciona o sprite correto de acordo com a última direção
+        img_agente_atual = sprites_qbert.get(ultima_acao, sprites_qbert['baixo_esq'])
 
         # Desenha o Q*bert na posição atual
-        larg_bloco = img_bloco_dir.get_width()
+        larg_bloco = img_bloco_dir_fase1.get_width()
         x_base_bloco = x_topo + (coluna_agente * ESPACAMENTO_X) - (linha_agente * (ESPACAMENTO_X // 2))
         y_base_bloco = y_topo + (linha_agente * ESPACAMENTO_Y)
 
-        x_agente = x_base_bloco + (larg_bloco // 2) - (img_agente.get_width() // 2)
-        y_agente = y_base_bloco - img_agente.get_height() + (ESPACAMENTO_Y // 2) - 24
+
+        x_agente = x_base_bloco + (larg_bloco // 2) - (img_agente_atual.get_width() // 2)
+        y_agente = y_base_bloco - img_agente_atual.get_height() + (ESPACAMENTO_Y // 2) - 24
         
-        tela.blit(img_agente, (x_agente, y_agente))
+        tela.blit(img_agente_atual, (x_agente, y_agente))
 
         pygame.display.flip()
         relogio.tick(30)
 
+def mostrar_tela_fim(vitoria, passos_totais):
+    """
+    Exibe um painel centralizado com o resultado e os passos antes de voltar ao menu.
+    """
+    esperando = True
+    while esperando:
+        # Fundo escuro semi-transparente cobrindo o jogo
+        overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        tela.blit(overlay, (0, 0))
+        
+        # Caixa de diálogo central
+        larg_caixa, alt_caixa = 520, 260
+        x_caixa = (LARGURA - larg_caixa) // 2
+        y_caixa = (ALTURA - alt_caixa) // 2
+        
+        pygame.draw.rect(tela, (25, 25, 40), (x_caixa, y_caixa, larg_caixa, alt_caixa), border_radius=12)
+        pygame.draw.rect(tela, (0, 255, 255), (x_caixa, y_caixa, larg_caixa, alt_caixa), 3, border_radius=12)
+        
+        # Textos informativos
+        titulo = "VITÓRIA!" if vitoria else "FIM DE JOGO"
+        cor_titulo = (0, 255, 0) if vitoria else (255, 80, 80)
+        
+        desenhar_texto(titulo, fonte_titulo, cor_titulo, LARGURA // 2, y_caixa + 35)
+        
+        status_txt = "A pirâmide foi totalmente pintada!" if vitoria else "O agente falhou ou caiu no abismo."
+        desenhar_texto(status_txt, fonte_texto, (255, 255, 255), LARGURA // 2, y_caixa + 95)
+        
+        desenhar_texto(f"Passos utilizados: {passos_totais}", fonte_texto, (255, 255, 0), LARGURA // 2, y_caixa + 145)
+        
+        desenhar_texto("Pressione [ENTER] para voltar ao Menu", fonte_texto, (200, 200, 200), LARGURA // 2, y_caixa + 205)
+        
+        pygame.display.flip()
+        
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                    esperando = False
+        relogio.tick(30)
 
 if __name__ == "__main__":
-    # 1. Abre o Menu Interativo
-    escolha_agente, modo_inimigos = rodar_menu()
-    print(f"\nConfiguração selecionada -> Agente: [{escolha_agente}] | Inimigos: {modo_inimigos}")
-    
-    # 2. Cria o ambiente
-    env = QbertEnv(niveis=6)
-    
-    # 3. Carrega (ou treina) o agente na memória
-    agente_carregado = carregar_agente(escolha_agente, env)
-    
-    # 4. Inicia o jogo gráfico com o agente pronto
-    if agente_carregado:
-        rodar_jogo(env, agente_carregado, escolha_agente, modo_inimigos)
+    while True:
+        # 1. Abre o Menu Interativo
+        escolha_agente, modo_inimigos = rodar_menu()
+        print(f"\nConfiguração selecionada -> Agente: [{escolha_agente}] | Inimigos: {modo_inimigos}")
         
-    pygame.quit()
-    sys.exit()
+        # 2. Cria o ambiente
+        env = QbertEnv(niveis=6)
+        
+        # 3. Carrega (ou treina) o agente na memória
+        agente_carregado = carregar_agente(escolha_agente, env)
+        
+        # 4. Inicia o jogo gráfico com o agente pronto
+        if agente_carregado:
+            rodar_jogo(env, agente_carregado, escolha_agente, modo_inimigos)
+            
