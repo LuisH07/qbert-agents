@@ -93,16 +93,16 @@ class QbertEnv:
                 if self.bola_verde.ativa and self.posicao_agente == self.bola_verde.posicao:
                     return self.posicao_agente, -100, False
             
-            recompensa = 0
+            recompensa = -1
             if self.estado_blocos[self.posicao_agente] == 0:
                 self.estado_blocos[self.posicao_agente] = 1
-                recompensa = 1 
+                recompensa = 10
                 
             vitoria = all(estado == 1 for estado in self.estado_blocos.values())
             if vitoria:
-                recompensa = 10
+                recompensa = 100
                 
             return self.posicao_agente, recompensa, vitoria
             
         else:
-            return self.posicao_agente, -10, False
+            return self.posicao_agente, -100, False

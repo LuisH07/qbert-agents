@@ -3,6 +3,7 @@ import sys
 from ambiente.qbert_env import QbertEnv
 from agentes.busca_heuristica import AgenteBuscaHeuristica
 from agentes.agente_genetico import AgenteGenetico
+from agentes.agente_reforco import AgenteReforco
 
 pygame.init()
 LARGURA, ALTURA = 800, 600
@@ -62,7 +63,7 @@ def rodar_menu():
         
         desenhar_texto("[1] Busca Heurística (A*)", fonte_texto, cor_a, LARGURA // 2, 200)
         desenhar_texto("[2] Algoritmo Genético (Evolutivo)", fonte_texto, cor_gen, LARGURA // 2, 240)
-        desenhar_texto("[3] Q-Learning (Em breve)", fonte_texto, cor_ql, LARGURA // 2, 280)
+        desenhar_texto("[3] Q-Learning (Aprendizado por reforço)", fonte_texto, cor_ql, LARGURA // 2, 280)
         
         # --- CONFIGURAÇÃO DE INIMIGOS ---
         desenhar_texto("Modo de Jogo (Pressione 'I' para alternar):", fonte_texto, (255, 255, 255), LARGURA // 2, 360)
@@ -100,7 +101,7 @@ def carregar_agente(escolha, env):
     Instancia e, se necessário, treina o agente escolhido antes de abrir o jogo.
     """
     if escolha == "1":
-        print("\n🧠 Carregando Busca Heurística (A*)...")
+        print("\nCarregando Busca Heurística (A*)...")
         agente_a = AgenteBuscaHeuristica()
         
         # Se for no modo estático, pré-calculamos a rota toda com tela de loading
@@ -129,7 +130,7 @@ def carregar_agente(escolha, env):
         return agente_a
         
     elif escolha == "2":
-        print("\n🧬 Evoluindo população com Algoritmo Genético... Aguarde!")
+        print("\nEvoluindo população com Algoritmo Genético...")
         
         animar_fade_texto("Evoluindo Genética...", fonte_titulo, (0, 255, 255), ALTURA // 2, fade_in=True)
         
@@ -144,8 +145,34 @@ def carregar_agente(escolha, env):
         return melhor_individuo
         
     elif escolha == "3":
-        print("\n⚠️ Q-Learning ainda será implementado! Usando A* por padrão.")
-        return AgenteBuscaHeuristica()
+        print("\nCarregando agente Q-Learning...")
+
+        tela.fill((20, 20, 30))
+        desenhar_texto(
+            "Treinando Q-Learning...",
+            fonte_titulo,
+            (0,255,255),
+            LARGURA//2,
+            ALTURA//2
+        )
+        pygame.display.flip()
+
+        agente = AgenteReforco()
+
+        try:
+            agente.carregar("q_table.pkl")
+            print("Tabela Q carregada.")
+
+        except FileNotFoundError:
+            print("Tabela não encontrada.")
+            print("Treinando...")
+            agente.treinar(
+                env,
+                episodios=10000
+            )
+            agente.salvar("q_table.pkl")
+
+        return agente
 
 def rodar_jogo(env, agente, escolha_agente, com_inimigos):
     """
