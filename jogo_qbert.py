@@ -151,7 +151,10 @@ def carregar_agente(escolha, env):
         return melhor_individuo
         
     elif escolha == "3":
-        print("\nCarregando agente Q-Learning...")
+        if env.com_inimigos:
+            print("\nCarregando agente Q-Learning Dinâmico...")
+        else:
+            print("\nCarregando agente Q-Learning...")
 
         tela.fill((20, 20, 30))
         desenhar_texto(
