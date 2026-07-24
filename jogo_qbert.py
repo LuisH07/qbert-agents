@@ -234,7 +234,7 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
 
     ESPACAMENTO_X, ESPACAMENTO_Y = 94, 58
     
-    # Sincroniza posições e temporizador (500ms entre pulos para podermos assistir)
+    # Sincroniza posições e temporizador (800ms entre pulos para podermos assistir)
     posicao_atual = env.reset()
     linha_agente, coluna_agente = posicao_atual
     
@@ -282,10 +282,6 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
 
             # 2. Executa a ação no ambiente se ela existir
             if acao is not None:
-                # Se desativamos os inimigos no menu, garantimos que a bola verde/coily não surjam
-                if not com_inimigos and hasattr(env, 'bola_verde'):
-                    env.bola_verde.ativa = False
-
                 passos_totais += 1
                 nova_posicao, recompensa, vitoria = env.step(acao)
                 linha_agente, coluna_agente = nova_posicao
