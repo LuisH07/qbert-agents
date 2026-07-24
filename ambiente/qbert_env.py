@@ -37,7 +37,6 @@ class QbertEnv:
             self.estado_blocos[no] = 0
             
         self.posicao_agente = (0, 0)
-        self.estado_blocos[self.posicao_agente] = 1
 
         self.bola_verde = BolaVerde()
         self.bola_verde.ativa = False
@@ -46,9 +45,10 @@ class QbertEnv:
         self.passos_rodada = 0
 
         self.coily = CobraCoily()
+
         self.coily.ativa = False
         self.posicao_coily = None
-        
+
         return self.posicao_agente
 
     def step(self, acao):
@@ -59,7 +59,6 @@ class QbertEnv:
             self.passos_rodada += 1
 
             # Coily só aparece após 8 passos, se o jogo estiver com inimigos
-            # Coily só aparece após 8 passos
             if self.com_inimigos and not self.coily.ativa and self.passos_rodada >= 6:
                 self.coily.ativa = True
                 self.posicao_coily = (0, 0)
