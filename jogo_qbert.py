@@ -551,10 +551,10 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
                 pygame.time.delay(200)
             
             pygame.time.delay(400)
-            mostrar_tela_fim(fim_de_jogo == "vitoria", passos_totais)
+            mostrar_tela_fim(fim_de_jogo == "vitoria", passos_totais, env.pontuacao)
             rodando = False
 
-def mostrar_tela_fim(vitoria, passos_totais):
+def mostrar_tela_fim(vitoria, passos_totais, pontuacao_final):
     """
     Exibe um painel centralizado com o resultado e os passos antes de voltar ao menu.
     """
@@ -566,7 +566,7 @@ def mostrar_tela_fim(vitoria, passos_totais):
         tela.blit(overlay, (0, 0))
         
         # Caixa de diálogo central
-        larg_caixa, alt_caixa = 520, 260
+        larg_caixa, alt_caixa = 520, 320
         x_caixa = (LARGURA - larg_caixa) // 2
         y_caixa = (ALTURA - alt_caixa) // 2
         
@@ -581,10 +581,12 @@ def mostrar_tela_fim(vitoria, passos_totais):
         
         status_txt = "A pirâmide foi totalmente pintada!" if vitoria else "O agente falhou ou caiu no abismo."
         desenhar_texto(status_txt, fonte_texto, (255, 255, 255), LARGURA // 2, y_caixa + 95)
+
+        desenhar_texto(f"Pontuação Final: {pontuacao_final:05d} PTS", fonte_card, (255, 215, 0), LARGURA // 2, y_caixa + 135)
         
-        desenhar_texto(f"Passos utilizados: {passos_totais}", fonte_texto, (255, 255, 0), LARGURA // 2, y_caixa + 145)
+        desenhar_texto(f"Passos utilizados: {passos_totais}", fonte_card, (180, 220, 255), LARGURA // 2, y_caixa + 175)
         
-        desenhar_texto("Pressione [ENTER] para voltar ao Menu", fonte_texto, (200, 200, 200), LARGURA // 2, y_caixa + 205)
+        desenhar_texto("Pressione [ENTER] para voltar ao Menu", fonte_texto, (200, 200, 200), LARGURA // 2, y_caixa + 245)
         
         pygame.display.flip()
         
