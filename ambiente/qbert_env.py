@@ -63,7 +63,7 @@ class QbertEnv:
             # Coily só aparece após 6 passos, se o jogo estiver com inimigos
             if self.com_inimigos and not self.coily.ativa and self.passos_rodada >= 6:
                 self.coily.ativa = True
-                print("4 segundos se passaram: O ovo da Coily surgiu em (0, 0)!")
+                print("O ovo da Coily surgiu em (0, 0)!")
             
             # --- COLISÃO 1: Q*bert pulou direto em algum inimigo? ---
             if self.com_inimigos:
@@ -72,12 +72,18 @@ class QbertEnv:
                 if self.bola_verde.ativa and self.posicao_agente == self.bola_verde.posicao:
                     return self.posicao_agente, -100, False
 
-            # --- MOVIMENTAÇÃO E SPAWN DOS INIMIGOS ---
+           # --- MOVIMENTAÇÃO E SPAWN DOS INIMIGOS ---
             if self.com_inimigos:
                 if self.coily.ativa:
-                    acao_coily = self.coily.obter_acao(self.posicao_coily, self.posicao_agente, self.grafo)
-                    if acao_coily and acao_coily in self.grafo[self.posicao_coily]:
-                        self.posicao_coily = self.grafo[self.posicao_coily][acao_coily]
+                    # Se for OVO, move todo turno. Se virou COBRA, move só passo sim, passo não (50% de velocidade) 
+                    deve_mover = True
+                    if hasattr(self.coily, 'estado') and self.coily.estado == "COBRA":
+                        deve_mover = (self.passos_rodada % 2 != 0)
+                    
+                    if deve_mover:
+                        acao_coily = self.coily.obter_acao(self.posicao_coily, self.posicao_agente, self.grafo)
+                        if acao_coily and acao_coily in self.grafo[self.posicao_coily]:
+                            self.posicao_coily = self.grafo[self.posicao_coily][acao_coily]
                 
                 if not self.bola_verde.ativa:
                     if random.random() < 0:
