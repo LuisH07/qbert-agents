@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 from ambiente.qbert_env import QbertEnv
 from agentes.busca_heuristica import AgenteBuscaHeuristica
 from agentes.busca_heuristica_dinamica import AgenteBuscaHeuristicaDinamica
@@ -14,8 +15,10 @@ tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Q*bert Agentes")
 relogio = pygame.time.Clock()
 
-fonte_texto = pygame.font.SysFont("Arial", 24)
-fonte_titulo = pygame.font.SysFont("Arial", 36, bold=True)
+fonte_texto = pygame.font.SysFont("Arial", 22)
+fonte_subtitulo = pygame.font.SysFont("Arial", 18)
+fonte_titulo = pygame.font.SysFont("Arial", 40, bold=True)
+fonte_card = pygame.font.SysFont("Arial", 24, bold=True)
 
 def desenhar_texto(texto, font, cor, x, y, centralizado=True):
     img = font.render(texto, True, cor)
@@ -44,6 +47,23 @@ def animar_fade_texto(texto, font, cor, y, fade_in=True, velocidade=15):
         pygame.display.flip()
         pygame.time.delay(15)
 
+def desenhar_card(texto, x, y, largura, altura, selecionado, cor_destaque=(0, 255, 150)):
+    """
+    Desenha um cartão moderno com bordas arredondadas e efeito de seleção.
+    """
+    cor_fundo = (35, 35, 55) if selecionado else (22, 22, 35)
+    cor_borda = cor_destaque if selecionado else (60, 60, 80)
+    espessura_borda = 3 if selecionado else 1
+    
+    if selecionado:
+        pygame.draw.rect(tela, (0, 0, 0, 100), (x + 3, y + 3, largura, altura), border_radius=10)
+        
+    pygame.draw.rect(tela, cor_fundo, (x, y, largura, altura), border_radius=10)
+    pygame.draw.rect(tela, cor_borda, (x, y, largura, altura), espessura_borda, border_radius=10)
+    
+    cor_texto = (255, 255, 255) if selecionado else (150, 150, 170)
+    desenhar_texto(texto, fonte_card, cor_texto, x + (largura // 2), y + (altura // 2) - 13)
+
 def rodar_menu():
     """
     Exibe a tela inicial de menu e retorna as escolhas do usuário.
@@ -53,30 +73,34 @@ def rodar_menu():
     rodando = True
 
     while rodando:
-        tela.fill((20, 20, 30)) # Fundo escuro moderno
+        tempo = pygame.time.get_ticks()
+        tela.fill((15, 15, 25))
         
         # --- TÍTULO ---
-        desenhar_texto("Q*BERT - AGENTES", fonte_titulo, (255, 255, 0), LARGURA // 2, 60)
-        desenhar_texto("Selecione o Agente (Teclas 1, 2 ou 3):", fonte_texto, (255, 255, 255), LARGURA // 2, 150)
+        desenhar_texto("Q*BERT AGENTS", fonte_titulo, (255, 215, 0), LARGURA // 2, 40)
+        desenhar_texto("Selecione o Agente (Teclas 1, 2 ou 3):", fonte_subtitulo, (180, 180, 200), LARGURA // 2, 110)
         
-        # --- OPÇÕES DE AGENTES ---
-        cor_a   = (0, 255, 0) if agente_escolhido == "1" else (140, 140, 140)
-        cor_gen = (0, 255, 0) if agente_escolhido == "2" else (140, 140, 140)
-        cor_ql  = (0, 255, 0) if agente_escolhido == "3" else (140, 140, 140)
+        # --- CARTÕES DE OPÇÕES DOS AGENTES ---
+        larg_card, alt_card = 460, 55
+        x_card = (LARGURA - larg_card) // 2
         
-        desenhar_texto("[1] Busca Heurística (A*)", fonte_texto, cor_a, LARGURA // 2, 200)
-        desenhar_texto("[2] Algoritmo Genético (Evolutivo)", fonte_texto, cor_gen, LARGURA // 2, 240)
-        desenhar_texto("[3] Q-Learning (Aprendizado por reforço)", fonte_texto, cor_ql, LARGURA // 2, 280)
+        desenhar_card("[ 1 ] Busca Heurística (A*)", x_card, 150, larg_card, alt_card, agente_escolhido == "1", (0, 255, 150))
+        desenhar_card("[ 2 ] Algoritmo Genético (Evolutivo)", x_card, 215, larg_card, alt_card, agente_escolhido == "2", (0, 200, 255))
+        desenhar_card("[ 3 ] Q-Learning (Reforço)", x_card, 280, larg_card, alt_card, agente_escolhido == "3", (255, 150, 0))
         
         # --- CONFIGURAÇÃO DE INIMIGOS ---
-        desenhar_texto("Modo de Jogo (Pressione 'I' para alternar):", fonte_texto, (255, 255, 255), LARGURA // 2, 360)
+        desenhar_texto("Modo do Ambiente (Pressione 'I' para alternar):", fonte_subtitulo, (180, 180, 200), LARGURA // 2, 365)
         
-        texto_ini = "COM INIMIGOS (Dinâmico)" if com_inimigos else "SEM INIMIGOS (Estático)"
-        cor_ini = (255, 80, 80) if com_inimigos else (80, 200, 255)
-        desenhar_texto(texto_ini, fonte_titulo, cor_ini, LARGURA // 2, 400)
+        larg_ini, alt_ini = 460, 60
+        x_ini = (LARGURA - larg_ini) // 2
+        cor_destaque_ini = (255, 80, 80) if com_inimigos else (80, 220, 255)
+        texto_ini = "COM INIMIGO (Dinâmico)" if com_inimigos else "SEM INIMIGO (Estático)"
         
-        # --- INICIAR ---
-        desenhar_texto("Pressione [ENTER] para Iniciar o Teste", fonte_texto, (255, 255, 0), LARGURA // 2, 510)
+        desenhar_card(texto_ini, x_ini, 400, larg_ini, alt_ini, True, cor_destaque_ini)
+        
+        escala_pulso = (math.sin(tempo * 0.005) + 1) * 0.5
+        cor_pulso = (int(200 + 55 * escala_pulso), int(200 + 55 * escala_pulso), int(50 * escala_pulso))
+        desenhar_texto("Pressione [ ENTER ] para Iniciar a Simulação", fonte_texto, cor_pulso, LARGURA // 2, 510)
 
         pygame.display.flip()
         
@@ -258,6 +282,7 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
     passo_genetico = 0
     passos_totais = 0
     ultima_acao = 'baixo_esq'
+    fim_de_jogo = None
     rodando = True
 
     while rodando:
@@ -325,12 +350,14 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
 
                 if vitoria:
                     print("\nVITÓRIA! O agente zerou a pirâmide!")
-                    mostrar_tela_fim(True, passos_totais)
-                    rodando = False
+                    fim_de_jogo = "vitoria"
+                    # mostrar_tela_fim(True, passos_totais)
+                    # rodando = False
                 elif recompensa in (-10, -100):
                     print("\nGAME OVER! O Q*bert caiu no abismo ou foi pego!")
-                    mostrar_tela_fim(False, passos_totais)
-                    rodando = False
+                    fim_de_jogo = "derrota"
+                    # mostrar_tela_fim(False, passos_totais)
+                    # rodando = False
             else:
                 print("\nO agente finalizou sua sequência de ações.")
                 rodando = False
@@ -394,6 +421,24 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
         pygame.display.flip()
         relogio.tick(30)
 
+        if fim_de_jogo is not None:
+            pygame.time.delay(1000)
+            
+            cor_flash = (0, 150, 0) if fim_de_jogo == "vitoria" else (150, 0, 0)
+            for _ in range(2):
+                overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
+                overlay.fill((*cor_flash, 30))
+                tela.blit(overlay, (0, 0))
+                pygame.display.flip()
+                pygame.time.delay(200)
+                
+                pygame.display.flip()
+                pygame.time.delay(200)
+            
+            pygame.time.delay(400)
+            mostrar_tela_fim(fim_de_jogo == "vitoria", passos_totais)
+            rodando = False
+
 def mostrar_tela_fim(vitoria, passos_totais):
     """
     Exibe um painel centralizado com o resultado e os passos antes de voltar ao menu.
@@ -415,7 +460,7 @@ def mostrar_tela_fim(vitoria, passos_totais):
         
         # Textos informativos
         titulo = "VITÓRIA!" if vitoria else "FIM DE JOGO"
-        cor_titulo = (0, 255, 0) if vitoria else (255, 80, 80)
+        cor_titulo = (0, 255, 150) if vitoria else (255, 80, 80)
         
         desenhar_texto(titulo, fonte_titulo, cor_titulo, LARGURA // 2, y_caixa + 35)
         
