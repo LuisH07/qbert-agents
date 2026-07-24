@@ -44,13 +44,10 @@ class QbertEnv:
         self.bola_verde.posicao = None
 
         self.passos_rodada = 0
+
         self.coily = CobraCoily()
-        if self.com_inimigos:
-            self.posicao_coily = (1, 1)
-            self.coily.ativa = False
-        else:
-            self.posicao_coily = None
-            self.coily.ativa = False
+        self.coily.ativa = False
+        self.posicao_coily = None
         
         return self.posicao_agente
 
@@ -62,9 +59,11 @@ class QbertEnv:
             self.passos_rodada += 1
 
             # Coily só aparece após 8 passos, se o jogo estiver com inimigos
-            if self.com_inimigos and not self.coily.ativa and self.passos_rodada >= 8:
+            # Coily só aparece após 8 passos
+            if self.com_inimigos and not self.coily.ativa and self.passos_rodada >= 6:
                 self.coily.ativa = True
-                print("4 segundos se passaram: O ovo da Coily surgiu em (1, 1)!")
+                self.posicao_coily = (0, 0)
+                print("4 segundos se passaram: O ovo da Coily surgiu em (0, 0)!")
             
             # --- COLISÃO 1: Q*bert pulou direto em algum inimigo? ---
             if self.com_inimigos:
