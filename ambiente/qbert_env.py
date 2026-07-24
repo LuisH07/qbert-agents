@@ -57,7 +57,6 @@ class QbertEnv:
             if self.com_inimigos and not self.coily.ativa and self.passos_rodada >= 6:
                 self.coily.ativa = True
                 self.posicao_coily = (0, 0)
-                print("4 segundos se passaram: O ovo da Coily surgiu em (0, 0)!")
             
             # --- COLISÃO 1: Q*bert pulou direto em algum inimigo? ---
             if self.com_inimigos:
