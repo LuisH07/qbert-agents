@@ -10,6 +10,7 @@ from agentes.agente_reforco import AgenteReforco
 from agentes.agente_reforco_dinamico import AgenteReforcoDinamico
 
 pygame.init()
+pygame.mixer.init()
 LARGURA, ALTURA = 800, 600
 tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Q*bert Agentes")
@@ -275,6 +276,18 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
             pygame.image.load("sprites/personagens/cobra-roxa-3.png").convert_alpha()
         ]
 
+        try:
+            som_inicio_de_jogo = pygame.mixer.Sound("sons/inicio-de-jogo.wav")
+            som_vitoria = pygame.mixer.Sound("sons/vitoria.wav")
+            som_pulo_qbert = pygame.mixer.Sound("sons/pulo-qbert.wav")
+            som_pulo_bola = pygame.mixer.Sound("sons/pulo-bola.wav")
+            som_pulo_cobra = pygame.mixer.Sound("sons/pulo-cobra.wav")
+            som_hit = pygame.mixer.Sound("sons/hit.wav")
+        except FileNotFoundError:
+            print("Erro: Arquivos de som não encontrados na pasta 'sons/'. Verifique os caminhos.")
+            return
+
+
         mult_x, mult_y = 1.4, 1
         nova_largura = int(img_bloco_dir_fase1.get_width() * mult_x)
         nova_altura = int(img_bloco_dir_fase1.get_height() * mult_y)
@@ -315,6 +328,9 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
     ultima_acao = 'baixo_esq'
     fim_de_jogo = None
     rodando = True
+
+    if som_inicio_de_jogo:
+        som_inicio_de_jogo.play()
 
     while rodando:
         tempo_atual = pygame.time.get_ticks()
@@ -371,8 +387,25 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
             # 2. Executa a ação no ambiente se ela existir
             if acao is not None:
                 passos_totais += 1
+
+                pos_coily_anterior = env.posicao_coily if (com_inimigos and hasattr(env, 'posicao_coily')) else None
+
                 nova_posicao, recompensa, vitoria = env.step(acao)
                 linha_agente, coluna_agente = nova_posicao
+
+                if som_pulo_qbert:
+                    som_pulo_qbert.play()
+
+                coily_moveu = (com_inimigos and 
+                               hasattr(env, 'coily') and 
+                               env.coily.ativa and 
+                               env.posicao_coily != pos_coily_anterior)
+
+                if coily_moveu and not vitoria:
+                    if env.coily.estado == "OVO" and som_pulo_bola:
+                        som_pulo_bola.play()
+                    elif env.coily.estado == "COBRA" and som_pulo_cobra:
+                        som_pulo_cobra.play()
 
                 if hasattr(env, 'coily') and env.coily.ativa:
                     if env.posicao_coily != ultima_posicao_coily:
@@ -387,13 +420,14 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
                 if vitoria:
                     print("\nVITÓRIA! O agente zerou a pirâmide!")
                     fim_de_jogo = "vitoria"
-                    # mostrar_tela_fim(True, passos_totais)
-                    # rodando = False
+                    if som_vitoria:
+                        som_vitoria.play()
                 elif recompensa in (-10, -100):
                     print("\nGAME OVER! O Q*bert caiu no abismo ou foi pego!")
                     fim_de_jogo = "derrota"
-                    # mostrar_tela_fim(False, passos_totais)
-                    # rodando = False
+
+                    if som_hit:
+                        som_hit.play()
             else:
                 print("\nO agente finalizou sua sequência de ações.")
                 rodando = False
