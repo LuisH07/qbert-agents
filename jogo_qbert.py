@@ -2,6 +2,7 @@ import pygame
 import sys
 from ambiente.qbert_env import QbertEnv
 from agentes.busca_heuristica import AgenteBuscaHeuristica
+from agentes.busca_heuristica_dinamica import AgenteBuscaHeuristicaDinamica
 from agentes.agente_genetico import AgenteGenetico
 from agentes.agente_reforco import AgenteReforco
 
@@ -101,6 +102,11 @@ def carregar_agente(escolha, env):
     Instancia e, se necessário, treina o agente escolhido antes de abrir o jogo.
     """
     if escolha == "1":
+
+        if env.com_inimigos:
+            print("\nCarregando Busca Heurística Dinâmica...")
+            return AgenteBuscaHeuristicaDinamica()
+        
         print("\nCarregando Busca Heurística (A*)...")
         agente_a = AgenteBuscaHeuristica()
         
@@ -250,7 +256,12 @@ def rodar_jogo(env, agente, escolha_agente, com_inimigos):
                     acao = agente.cromossomo[passo_genetico]
                     passo_genetico += 1
             else:  # A* Dinâmico (com inimigos ativos) calcula em tempo real
-                acao = agente.obter_acao(env.estado_blocos, env.posicao_agente, env.grafo)
+                if isinstance(agente, AgenteBuscaHeuristicaDinamica):
+                    # Passa a posição atual da Coily para o agente conseguir desviar
+                    pos_inimigo = env.posicao_coily if (env.com_inimigos and env.coily.ativa) else None
+                    acao = agente.obter_acao(env.estado_blocos, env.posicao_agente, env.grafo, posicao_inimigo=pos_inimigo)
+                else:
+                    acao = agente.obter_acao(env.estado_blocos, env.posicao_agente, env.grafo)
 
             # 2. Executa a ação no ambiente se ela existir
             if acao is not None:
